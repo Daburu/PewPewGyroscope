@@ -10,11 +10,9 @@ public class InputManager : MonoBehaviour
 	private float mouseSensitivityY = 2.5f;
 	// Mobile
 	#else
-	private GameObject camParent;
+	private GameObject camParent, camYRotator;
 	private Gyroscope gyro;
-	private Quaternion gyroInitialRotation;
-	private Quaternion offsetRotation = Quaternion.identity;
-	private Vector3 initialDirection;
+	private float yAngleOffset = 0.0f;
 	#endif
 
 	// Component/Variable Cache
@@ -41,9 +39,10 @@ public class InputManager : MonoBehaviour
 		// Rotate the parent object by 90 degrees around the x axis
 		camParent.transform.Rotate(Vector3.right, 90);
 
-		// Offset setup
-		gyroInitialRotation = gyro.attitude;
-		initialDirection = transform.forward;
+		// Set up the parent object of camParent to handle y rotation.
+		camYRotator = new GameObject("CamYRotator");
+		camYRotator.transform.position = transform.position;
+		camParent.transform.parent = camYRotator.transform;
 		#endif
 	}
 
@@ -63,8 +62,6 @@ public class InputManager : MonoBehaviour
 
 		// Now set the local rotation of the child camera object
 		transform.localRotation = rotFix;
-
-		transform.rotation *= offsetRotation;
 		#endif
 	}
 
@@ -72,10 +69,9 @@ public class InputManager : MonoBehaviour
 	{
 		#if UNITY_EDITOR
 		#else
-		Vector3 currentDirection = transform.forward;
-		offsetRotation = Quaternion.FromToRotation(initialDirection, currentDirection);
-		Text text = GameObject.Find("DEBUG_TEXT").GetComponent<Text>();
-		text.text = initialDirection.ToString() + "\n" + currentDirection.ToString();
+		camYRotator.transform.Rotate(Vector3.up, -yAngleOffset);
+		yAngleOffset = -transform.rotation.eulerAngles.y;
+		camYRotator.transform.Rotate(Vector3.up, yAngleOffset);
 		#endif
 	}
 }
